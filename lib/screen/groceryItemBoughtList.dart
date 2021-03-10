@@ -56,7 +56,9 @@ class GroceryItemBoughtListState extends State {
                 backgroundColor: getColor(this.groceryItems[position].priority),
                 child: Text(this.groceryItems[position].priority.toString())),
             title: Text(this.groceryItems[position].name),
-            subtitle: Text(this.groceryItems[position].quantity.toString()),
+            subtitle: Text(this.groceryItems[position].quantity.toString() +
+                " - \$" +
+                this.groceryItems[position].price.toString()),
             onTap: () {
               navigateToDetail(this.groceryItems[position]);
             },
@@ -120,7 +122,7 @@ class GroceryItemBoughtListState extends State {
               backgroundColor: Colors.redAccent,
               title: Text(
                 mnuCleanBoughItems,
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Colors.white),                
               ),
               content: Text(
                 'Items will be cleaned',

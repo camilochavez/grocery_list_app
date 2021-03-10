@@ -19,6 +19,7 @@ class _GroceryItemSlidableListState extends State {
   DbHelper helper = DbHelper();
   List<GroceryItem> groceryItems;
   int count = 0;
+  TextEditingController _txtPriceController = TextEditingController();
 
   @override
   void initState() {
@@ -109,14 +110,16 @@ class _GroceryItemSlidableListState extends State {
             backgroundColor: getColor(this.groceryItems[position].priority),
             child: Text(this.groceryItems[position].priority.toString())),
         title: Text(this.groceryItems[position].name),
-        subtitle: Text(this.groceryItems[position].quantity.toString()),
+        subtitle: Text(this.groceryItems[position].quantity.toString() +
+            " - \$" +
+            this.groceryItems[position].price.toString()),
         onTap: () {
           navigateToDetail(this.groceryItems[position]);
         },
       ),
       actionDelegate: SlideActionBuilderDelegate(
           actionCount: 1,
-          builder: (context, position, animation, renderingMode) {
+          builder: (context, index, animation, renderingMode) {
             return IconSlideAction(
                 caption: 'Bought it!',
                 color: renderingMode == SlidableRenderingMode.slide
@@ -126,16 +129,7 @@ class _GroceryItemSlidableListState extends State {
                         : Colors.green),
                 icon: Icons.shopping_cart_rounded,
                 onTap: () async {
-                  groceryIsBought(item).then((value) {
-                    if (value) {
-                      _showSnackBar(context, 'Bought it');
-                      setState(() {
-                        groceryItems.remove(item);
-                      });
-                    } else {
-                      _showSnackBar(context, 'Failed!');
-                    }
-                  });
+                  await _displayTextInputDialog(context, item);
                 });
           }),
       secondaryActionDelegate: SlideActionBuilderDelegate(
@@ -300,5 +294,68 @@ class _GroceryItemSlidableListState extends State {
         }
         break;
     }
+  }
+
+  Future<void> _displayTextInputDialog(
+      BuildContext context, GroceryItem groceryItem) async {
+    _txtPriceController.text = '';
+    TextStyle textStyle = TextStyle(
+        color: Colors.white,
+        fontSize: Theme.of(context).textTheme.headline6.fontSize);
+    return await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: Colors.blueAccent,
+            title: Text(
+              'Item was bought!',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: TextField(
+                onChanged: (value) => updatePrice(groceryItem),
+                controller: _txtPriceController,
+                decoration: InputDecoration(
+                  hintText: 'e.g. 124',
+                  hintStyle: textStyle,
+                  labelText: 'Price',
+                  labelStyle: textStyle,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(2.0),
+                      borderSide: BorderSide(color: Colors.white)),
+                ),
+                keyboardType: TextInputType.number),
+            actions: <Widget>[
+              FlatButton(
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              FlatButton(
+                  child: Text(
+                    'Ok',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () {
+                    groceryIsBought(groceryItem).then((value) {
+                      if (value) {
+                        setState(() {
+                          groceryItems.remove(groceryItem);
+                          _showSnackBar(context, 'Bought it');
+                        });
+                      } else {
+                        _showSnackBar(context, 'Failed!');
+                      }
+                    });
+                    Navigator.of(context).pop(true);
+                  }),
+            ],
+          );
+        });
+  }
+
+  void updatePrice(GroceryItem item) {
+    item.price = int.parse(_txtPriceController.text);
   }
 }
