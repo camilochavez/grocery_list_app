@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:grocery_list/screen/groceryItemSlidableList.dart';
+import 'package:grocery_list/screen/groceryPageView.dart';
 import 'package:grocery_list/util/dbhelper.dart';
 
 void main() {
@@ -33,6 +33,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
         //body: GroceryItemList()
-        body: GroceryItemSlidableList());
+        body: GroceryPageView());
   }
 }

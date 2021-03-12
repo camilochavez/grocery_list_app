@@ -20,8 +20,10 @@ class GroceryItem {
   int get id => _id;
   String get name => _name;
   int get priority => _priority;
+  // ignore: unnecessary_getters_setters
   int get quantity => _quantity;
   int get price => _price;
+  // ignore: unnecessary_getters_setters
   bool get isBought => _isBought;
 
   set name(String newName) {
@@ -36,10 +38,11 @@ class GroceryItem {
     }
   }
 
+  // ignore: unnecessary_getters_setters
   set quantity(int newQuantity) => _quantity = newQuantity;
 
   set price(int newPrice) => _price = _price = newPrice;
-
+  // ignore: unnecessary_getters_setters
   set isBought(bool newIsBought) => _isBought = newIsBought;
 
   Map<String, dynamic> toMap() {

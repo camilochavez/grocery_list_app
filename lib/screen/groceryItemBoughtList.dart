@@ -4,9 +4,8 @@ import 'package:grocery_list/util/dbhelper.dart';
 import 'package:grocery_list/screen/GroceryItemdetail.dart';
 
 const mnuCleanBoughItems = 'Clean Grocery Bough Items';
-const mnuGoBack = 'Go back to Grocery Items List';
 
-final List<String> choices = const <String>[mnuCleanBoughItems, mnuGoBack];
+final List<String> choices = const <String>[mnuCleanBoughItems];
 
 class GroceryItemBoughtList extends StatefulWidget {
   @override
@@ -21,44 +20,72 @@ class GroceryItemBoughtListState extends State {
   @override
   Widget build(BuildContext context) {
     if (groceryItems == null) {
-      groceryItems = List<GroceryItem>();
+      groceryItems = <GroceryItem>[];
       getData();
     }
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Grocery Bough Items List'),
-        automaticallyImplyLeading: false,
-        actions: <Widget>[
-          PopupMenuButton(
-            onSelected: select,
-            itemBuilder: (BuildContext context) {
-              return choices.map((String choice) {
-                return PopupMenuItem<String>(
-                    value: choice, child: Text(choice));
-              }).toList();
-            },
-          )
-        ],
-      ),
-      body: groceryItemList(),
-    );
+        appBar: AppBar(
+          title: Text('Grocery Bough Items List'),
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.teal[200],
+          actions: <Widget>[
+            PopupMenuButton(
+              onSelected: select,
+              itemBuilder: (BuildContext context) {
+                return choices.map((String choice) {
+                  return PopupMenuItem<String>(
+                      value: choice, child: Text(choice));
+                }).toList();
+              },
+            )
+          ],
+        ),
+        body: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("images/fresh_vegetables.jpg"),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: groceryItemList()));
   }
 
   ListView groceryItemList() {
+    TextStyle textStyleTitle = TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Colors.teal[900],
+        fontSize: 18.0,
+        decorationThickness: 3.0,
+        decoration: TextDecoration.underline,
+        shadows: [
+          BoxShadow(
+              color: Colors.white24, blurRadius: 5.0, offset: Offset(3.0, 3.0))
+        ]);
+    TextStyle textStyleSubTitle = TextStyle(
+        fontWeight: FontWeight.bold,
+        backgroundColor: Colors.white24,
+        color: Colors.teal[900],
+        fontSize: 15.0,
+        decorationThickness: 3.0,
+        decoration: TextDecoration.underline,
+        shadows: [
+          BoxShadow(
+              color: Colors.white, blurRadius: 5.0, offset: Offset(3.0, 3.0))
+        ]);
     return ListView.builder(
       itemCount: count,
       itemBuilder: (BuildContext context, int position) {
         return Card(
-          color: Colors.white,
+          color: Colors.white38,
           elevation: 2.0,
           child: ListTile(
             leading: CircleAvatar(
                 backgroundColor: getColor(this.groceryItems[position].priority),
-                child: Text(this.groceryItems[position].priority.toString())),
-            title: Text(this.groceryItems[position].name),
-            subtitle: Text(this.groceryItems[position].quantity.toString() +
-                " - \$" +
-                this.groceryItems[position].price.toString()),
+                child: Text(this.groceryItems[position].quantity.toString())),
+            title:
+                Text(this.groceryItems[position].name, style: textStyleTitle),
+            subtitle: Text("\$" + this.groceryItems[position].price.toString(),
+                style: textStyleSubTitle),
             onTap: () {
               navigateToDetail(this.groceryItems[position]);
             },
@@ -73,7 +100,7 @@ class GroceryItemBoughtListState extends State {
     dbFuture.then((result) {
       final groceryItemsFuture = helper.getGroceryBoughtItems();
       groceryItemsFuture.then((result) {
-        List<GroceryItem> groceryItemList = List<GroceryItem>();
+        List<GroceryItem> groceryItemList = <GroceryItem>[];
         count = result.length;
         for (int i = 0; i < count; i++) {
           groceryItemList.add(GroceryItem.fromObject(result[i]));
@@ -86,16 +113,16 @@ class GroceryItemBoughtListState extends State {
     });
   }
 
-  Color getColor(int priority) {
+   Color getColor(int priority) {
     switch (priority) {
       case 1:
-        return Colors.red;
+        return Colors.redAccent[700];
         break;
       case 2:
-        return Colors.orange;
+        return Colors.orange[700];
         break;
       case 3:
-        return Colors.green;
+        return Colors.lightBlueAccent;
         break;
       default:
         return Colors.green;
@@ -122,21 +149,21 @@ class GroceryItemBoughtListState extends State {
               backgroundColor: Colors.redAccent,
               title: Text(
                 mnuCleanBoughItems,
-                style: TextStyle(color: Colors.white),                
+                style: TextStyle(color: Colors.white),
               ),
               content: Text(
                 'Items will be cleaned',
                 style: TextStyle(color: Colors.white),
               ),
               actions: <Widget>[
-                FlatButton(
+                TextButton(
                   child: Text(
                     'Cancel',
                     style: TextStyle(color: Colors.white),
                   ),
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
-                FlatButton(
+                TextButton(
                     child: Text(
                       'Ok',
                       style: TextStyle(color: Colors.white),
@@ -149,10 +176,6 @@ class GroceryItemBoughtListState extends State {
             );
           },
         );
-        Navigator.pop(context, true);
-        break;
-      case mnuGoBack:
-        Navigator.pop(context, true);
         break;
     }
   }

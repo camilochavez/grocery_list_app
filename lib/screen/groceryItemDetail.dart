@@ -25,16 +25,21 @@ class GroceryItemDetailState extends State {
   final _priorities = ["High", "Medium", "Low"];
   TextEditingController nameController = TextEditingController();
   TextEditingController quantityController = TextEditingController();
+  TextEditingController priceController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     nameController.text = groceryItem.name;
     quantityController.text = groceryItem.quantity.toString();
-    TextStyle textStyle = Theme.of(context).textTheme.headline6;
+    priceController.text = groceryItem.price.toString();
+    TextStyle textStyle = TextStyle(
+        fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18.0);
+
     return Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
           title: Text(groceryItem.name),
+          backgroundColor: Colors.teal[200],
           actions: <Widget>[
             PopupMenuButton(
               onSelected: select,
@@ -47,43 +52,72 @@ class GroceryItemDetailState extends State {
             )
           ],
         ),
-        body: Padding(
-            padding: EdgeInsets.only(top: 35.0, left: 10.0, right: 10.0),
-            child: ListView(
-              children: <Widget>[
-                Column(children: <Widget>[
-                  TextField(
-                      controller: nameController,
-                      style: textStyle,
-                      onChanged: (value) => this.updateTitle(),
-                      decoration: InputDecoration(
-                          labelText: "Name",
-                          labelStyle: textStyle,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(5.0)))),
-                  Padding(
-                      padding: EdgeInsets.only(top: 15, bottom: 15.0),
-                      child: TextField(
-                          controller: quantityController,
+        body: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("images/fresh_vegetables.jpg"),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Padding(
+                padding: EdgeInsets.only(top: 35.0, left: 10.0, right: 10.0),
+                child: ListView(
+                  children: <Widget>[
+                    Column(children: <Widget>[
+                      TextField(
+                          controller: nameController,
                           style: textStyle,
-                          onChanged: (value) => this.updateQuantity(),
+                          onChanged: (value) => this.updateTitle(),
                           decoration: InputDecoration(
-                              labelText: "quantity",
+                              labelText: "Name",
                               labelStyle: textStyle,
                               border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5.0))))),
-                  ListTile(
-                      title: DropdownButton<String>(
-                          items: _priorities.map((String value) {
-                            return DropdownMenuItem<String>(
-                                value: value, child: Text(value));
-                          }).toList(),
-                          style: textStyle,
-                          value: retrievePriority(groceryItem.priority),
-                          onChanged: (value) => updatePriority(value)))
-                ])
-              ],
-            )),
+                                  borderRadius: BorderRadius.circular(5.0)))),
+                      Padding(
+                          padding: EdgeInsets.only(top: 15, bottom: 15.0),
+                          child: TextField(
+                              keyboardType: TextInputType.number,
+                              controller: quantityController,
+                              style: textStyle,
+                              onChanged: (value) => this.updateQuantity(),
+                              decoration: InputDecoration(
+                                  labelText: "Quantity",
+                                  labelStyle: textStyle,
+                                  border: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(5.0))))),
+                      Padding(
+                          padding: EdgeInsets.only(top: 15, bottom: 15.0),
+                          child: TextField(
+                              keyboardType: TextInputType.number,
+                              controller: priceController,
+                              style: textStyle,
+                              onChanged: (value) => this.updatePrice(),
+                              decoration: InputDecoration(
+                                  labelText: "Price",
+                                  labelStyle: textStyle,
+                                  border: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(5.0))))),
+                      ListTile(
+                          title: Container(
+                              child: new Theme(
+                                  data: Theme.of(context).copyWith(
+                                    canvasColor: Colors.blue.shade200,
+                                  ),
+                                  child: DropdownButton<String>(
+                                      items: _priorities.map((String value) {
+                                        return DropdownMenuItem<String>(
+                                            value: value, child: Text(value));
+                                      }).toList(),
+                                      style: textStyle,
+                                      value: retrievePriority(
+                                          groceryItem.priority),
+                                      onChanged: (value) =>
+                                          updatePriority(value)))))
+                    ])
+                  ],
+                ))),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             save();
@@ -137,8 +171,7 @@ class GroceryItemDetailState extends State {
         groceryItem.priority = 3;
         break;
     }
-    setState(() {
-    });
+    setState(() {});
   }
 
   String retrievePriority(int value) {
@@ -151,5 +184,9 @@ class GroceryItemDetailState extends State {
 
   void updateQuantity() {
     groceryItem.quantity = int.parse(quantityController.text);
+  }
+
+  void updatePrice() {
+    groceryItem.price = int.parse(priceController.text);
   }
 }

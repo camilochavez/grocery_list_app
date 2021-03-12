@@ -3,11 +3,6 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:grocery_list/model/groceryItem.dart';
 import 'package:grocery_list/util/dbhelper.dart';
 import 'GroceryItemdetail.dart';
-import 'groceryItemBoughtList.dart';
-
-const mnuBoughItems = 'Go to  Grocery Bough Items';
-
-final List<String> choices = const <String>[mnuBoughItems];
 
 class GroceryItemSlidableList extends StatefulWidget {
   @override
@@ -36,35 +31,32 @@ class _GroceryItemSlidableListState extends State {
   @override
   Widget build(BuildContext context) {
     if (groceryItems == null) {
-      groceryItems = List<GroceryItem>();
+      groceryItems = <GroceryItem>[];
       getData();
     }
     return Scaffold(
         appBar: AppBar(
           title: Text('Grocery List'),
           automaticallyImplyLeading: false,
-          actions: <Widget>[
-            PopupMenuButton(
-              onSelected: select,
-              itemBuilder: (BuildContext context) {
-                return choices.map((String choice) {
-                  return PopupMenuItem<String>(
-                      value: choice, child: Text(choice));
-                }).toList();
-              },
-            )
-          ],
+          backgroundColor: Colors.teal[200],
         ),
         backgroundColor: Colors.white24,
-        body: Center(
-          child: OrientationBuilder(
-            builder: (context, orientation) => _buildList(
-                context,
-                orientation == Orientation.portrait
-                    ? Axis.vertical
-                    : Axis.horizontal),
-          ),
-        ),
+        body: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("images/fresh_vegetables.jpg"),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Center(
+              child: OrientationBuilder(
+                builder: (context, orientation) => _buildList(
+                    context,
+                    orientation == Orientation.portrait
+                        ? Axis.vertical
+                        : Axis.horizontal),
+              ),
+            )),
         floatingActionButton: FloatingActionButton(
             backgroundColor: _fabColor,
             onPressed: () {
@@ -99,24 +91,48 @@ class _GroceryItemSlidableListState extends State {
   Widget _slidableWithDelegates(
       BuildContext context, int position, Axis direction) {
     final GroceryItem item = groceryItems[position];
+    TextStyle textStyleTitle = TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Colors.teal[900],
+        fontSize: 18.0,
+        decorationThickness: 3.0,
+        decoration: TextDecoration.underline,
+        shadows: [
+          BoxShadow(
+              color: Colors.white24, blurRadius: 5.0, offset: Offset(3.0, 3.0))
+        ]);
+    TextStyle textStyleSubTitle = TextStyle(
+        fontWeight: FontWeight.bold,
+        backgroundColor: Colors.white24,
+        color: Colors.teal[900],
+        fontSize: 15.0,
+        decorationThickness: 3.0,
+        decoration: TextDecoration.underline,
+        shadows: [
+          BoxShadow(
+              color: Colors.white, blurRadius: 5.0, offset: Offset(3.0, 3.0))
+        ]);
     return Slidable.builder(
       key: Key(item.id.toString()),
       controller: _slidableController,
       direction: direction,
       actionPane: _actionPane(item.id),
       actionExtentRatio: 0.20,
-      child: ListTile(
-        leading: CircleAvatar(
-            backgroundColor: getColor(this.groceryItems[position].priority),
-            child: Text(this.groceryItems[position].priority.toString())),
-        title: Text(this.groceryItems[position].name),
-        subtitle: Text(this.groceryItems[position].quantity.toString() +
-            " - \$" +
-            this.groceryItems[position].price.toString()),
-        onTap: () {
-          navigateToDetail(this.groceryItems[position]);
-        },
-      ),
+      child: Card(
+          color: Colors.white38,
+          elevation: 2.0,
+          child: ListTile(
+            leading: CircleAvatar(
+                backgroundColor: getColor(this.groceryItems[position].priority),
+                child: Text(this.groceryItems[position].quantity.toString())),
+            title:
+                Text(this.groceryItems[position].name, style: textStyleTitle),
+            subtitle: Text("\$" + this.groceryItems[position].price.toString(),
+                style: textStyleSubTitle),
+            onTap: () {
+              navigateToDetail(this.groceryItems[position]);
+            },
+          )),
       actionDelegate: SlideActionBuilderDelegate(
           actionCount: 1,
           builder: (context, index, animation, renderingMode) {
@@ -156,14 +172,14 @@ class _GroceryItemSlidableListState extends State {
                         style: TextStyle(color: Colors.white),
                       ),
                       actions: <Widget>[
-                        FlatButton(
+                        TextButton(
                           child: Text(
                             'Cancel',
                             style: TextStyle(color: Colors.white),
                           ),
                           onPressed: () => Navigator.of(context).pop(false),
                         ),
-                        FlatButton(
+                        TextButton(
                             child: Text(
                               'Ok',
                               style: TextStyle(color: Colors.white),
@@ -208,7 +224,7 @@ class _GroceryItemSlidableListState extends State {
   }
 
   void _showSnackBar(BuildContext context, String text) {
-    Scaffold.of(context).showSnackBar(SnackBar(content: Text(text)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   void slideAnimationChanged(Animation<double> slideAnimation) {
@@ -228,7 +244,7 @@ class _GroceryItemSlidableListState extends State {
     dbFuture.then((result) {
       final groceryItemsFuture = helper.getGroceryItems();
       groceryItemsFuture.then((result) {
-        List<GroceryItem> groceryItemList = List<GroceryItem>();
+        List<GroceryItem> groceryItemList = <GroceryItem>[];
         count = result.length;
         for (int i = 0; i < count; i++) {
           groceryItemList.add(GroceryItem.fromObject(result[i]));
@@ -254,13 +270,13 @@ class _GroceryItemSlidableListState extends State {
   Color getColor(int priority) {
     switch (priority) {
       case 1:
-        return Colors.red;
+        return Colors.redAccent[700];
         break;
       case 2:
-        return Colors.orange;
+        return Colors.orange[700];
         break;
       case 3:
-        return Colors.green;
+        return Colors.lightBlueAccent;
         break;
       default:
         return Colors.green;
@@ -284,18 +300,6 @@ class _GroceryItemSlidableListState extends State {
     return result != 0 ? true : false;
   }
 
-  void select(String value) async {
-    switch (value) {
-      case mnuBoughItems:
-        bool result = await Navigator.push(context,
-            MaterialPageRoute(builder: (context) => GroceryItemBoughtList()));
-        if (result == true) {
-          getData();
-        }
-        break;
-    }
-  }
-
   Future<void> _displayTextInputDialog(
       BuildContext context, GroceryItem groceryItem) async {
     _txtPriceController.text = '';
@@ -306,7 +310,7 @@ class _GroceryItemSlidableListState extends State {
         context: context,
         builder: (context) {
           return AlertDialog(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: Colors.lightBlueAccent,
             title: Text(
               'Item was bought!',
               style: TextStyle(color: Colors.white),
@@ -325,14 +329,14 @@ class _GroceryItemSlidableListState extends State {
                 ),
                 keyboardType: TextInputType.number),
             actions: <Widget>[
-              FlatButton(
+              TextButton(
                 child: Text(
                   'Cancel',
                   style: TextStyle(color: Colors.white),
                 ),
                 onPressed: () => Navigator.of(context).pop(false),
               ),
-              FlatButton(
+              TextButton(
                   child: Text(
                     'Ok',
                     style: TextStyle(color: Colors.white),
