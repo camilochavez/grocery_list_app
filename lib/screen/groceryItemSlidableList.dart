@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:grocery_list/model/groceryItem.dart';
 import 'package:grocery_list/util/dbhelper.dart';
+import 'package:grocery_list/util/fileManager.dart';
 import 'GroceryItemdetail.dart';
 
 class GroceryItemSlidableList extends StatefulWidget {
@@ -15,6 +16,7 @@ class _GroceryItemSlidableListState extends State {
   List<GroceryItem> groceryItems;
   int count = 0;
   TextEditingController _txtPriceController = TextEditingController();
+  TextEditingController _txtTypeAheadController = TextEditingController();
 
   @override
   void initState() {
@@ -34,13 +36,39 @@ class _GroceryItemSlidableListState extends State {
       groceryItems = <GroceryItem>[];
       getData();
     }
+    TextStyle textStyle = TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Colors.white,        
+        fontSize: 18.0);
     return Scaffold(
         appBar: AppBar(
-          title: Text('Grocery List'),
+          title: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Column(children: [Text('Grocery List')]),
+                Padding(
+                    padding: EdgeInsets.only(left: 25.0),
+                    child: Column(children: [
+                      Container(                       
+                          width: 200.0,
+                          height: 30.0,
+                          child: TextField(
+                              controller: _txtTypeAheadController,
+                              style: textStyle,
+                              onChanged: (value) => this.getSuggestionData(),
+                              decoration: InputDecoration(
+                                fillColor: Colors.teal[100],
+                                  labelStyle: textStyle,
+                                  border: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(5.0)))))
+                    ])),
+                Icon(Icons.search)
+              ]),
           automaticallyImplyLeading: false,
           backgroundColor: Colors.teal[200],
-        ),
-        backgroundColor: Colors.white24,
+        ),        
         body: Container(
             decoration: BoxDecoration(
               image: DecorationImage(
@@ -60,7 +88,7 @@ class _GroceryItemSlidableListState extends State {
         floatingActionButton: FloatingActionButton(
             backgroundColor: _fabColor,
             onPressed: () {
-              navigateToDetail(GroceryItem(''));
+              navigateToDetail(GroceryItem(''));              
             },
             tooltip: "Add new Grocery Item",
             child: _rotationAnimation == null
@@ -361,5 +389,24 @@ class _GroceryItemSlidableListState extends State {
 
   void updatePrice(GroceryItem item) {
     item.price = int.parse(_txtPriceController.text);
+  }
+
+  void getSuggestionData() {
+    final dbFuture = helper.initializeDb();
+    dbFuture.then((result) {
+      final groceryItemsFuture =
+          helper.groceryItemsTypeAhead(_txtTypeAheadController.text, false);
+      groceryItemsFuture.then((result) {
+        List<GroceryItem> groceryItemList = <GroceryItem>[];
+        count = result.length;
+        for (int i = 0; i < count; i++) {
+          groceryItemList.add(GroceryItem.fromObject(result[i]));
+        }
+        setState(() {
+          groceryItems = groceryItemList;
+          count = count;
+        });
+      });
+    });
   }
 }

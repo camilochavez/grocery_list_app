@@ -52,14 +52,22 @@ class DbHelper {
   Future<List> getGroceryItems() async {
     Database db = await this.db;
     var result = await db.rawQuery(
-        "SELECT * FROM $tblGroceryItem WHERE $colIsBought = 0 ORDER BY $colPriority, $colName ASC");
+        "SELECT * FROM $tblGroceryItem WHERE $colIsBought = 0 ORDER BY $colPriority, $colName COLLATE NOCASE ASC ");
     return result;
   }
 
   Future<List> getGroceryBoughtItems() async {
     Database db = await this.db;
     var result = await db.rawQuery(
-        "SELECT * FROM $tblGroceryItem WHERE $colIsBought = 1 ORDER BY $colPriority, $colName ASC");
+        "SELECT * FROM $tblGroceryItem WHERE $colIsBought = 1 ORDER BY $colPriority, $colName COLLATE NOCASE ASC");
+    return result;
+  }
+
+    Future<List> groceryItemsTypeAhead(String word, bool isBoughtItem) async {
+    Database db = await this.db;
+    int isBough = isBoughtItem?1:0;
+    var result = await db.rawQuery(
+        "SELECT * FROM $tblGroceryItem WHERE $colIsBought = $isBough and $colName like '$word%' ORDER BY $colPriority, $colName COLLATE NOCASE ASC");
     return result;
   }
 

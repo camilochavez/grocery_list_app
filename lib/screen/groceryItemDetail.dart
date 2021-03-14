@@ -38,10 +38,13 @@ class GroceryItemDetailState extends State {
     return Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          title: Text(groceryItem.name),
+          title: Text(groceryItem.name.length == 0
+              ? "New Grocery Item"
+              : groceryItem.name),
           backgroundColor: Colors.teal[200],
           actions: <Widget>[
             PopupMenuButton(
+              icon: Icon(Icons.menu),
               onSelected: select,
               itemBuilder: (BuildContext context) {
                 return choices.map((String choice) {
