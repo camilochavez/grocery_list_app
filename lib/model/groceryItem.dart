@@ -66,4 +66,19 @@ class GroceryItem {
     _price = o["price"];
     _isBought = o["isBought"] == 1 ? true : false;
   }
+
+  GroceryItem.fromJson(Map<String, dynamic> json)
+      : _name = json["name"],
+        _quantity = json["quantity"],
+        _priority = json["priority"],
+        _price = json["price"],
+        _isBought = json["isBought"] == 1 ? true : false;
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'quantity': quantity,
+        'priority': priority,
+        'price': price,
+        'isBought': isBought ? 1 : 0
+      };
 }

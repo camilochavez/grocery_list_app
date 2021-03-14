@@ -1,40 +1,81 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:filex/filex.dart';
+import 'package:flutter_share/flutter_share.dart';
+import 'package:grocery_list/model/groceryItem.dart';
+import 'package:grocery_list/util/dbhelper.dart';
+import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 
 class FileManager {
+  static final FileManager _fileManager = FileManager._internal();
+  String fileName;
+  File jsonFile;
+  FileType fileType;
 
-  void importGroceryList() async {
+  FileManager._internal();
+
+  factory FileManager() {
+    return _fileManager;
+  }
+
+  Future<void> importGroceryList() async {
     try {
-      final file = await _filePath;
-      // Read the file.
-      String contents = await file.readAsString();
+      if (await _openFileExplorer()) {
+        final String response = await jsonFile.readAsString();
+        final data = await json.decode(response);
+        await data.forEach((groceryJsonItem) {
+          GroceryItem gItem = GroceryItem.fromJson(groceryJsonItem);
+          DbHelper()
+              .isGroceryItemAlreadyExistsByName(gItem.name)
+              .then((isNewGroceryItem) async {
+            if (!isNewGroceryItem) {
+              await DbHelper().insertGroceryItem(gItem);
+            }
+          });
+        });
+      }
     } catch (e) {
-      // If encountering an error, return 0.
       return;
     }
   }
 
-  Future<File> get _filePath async {
-var dir = await getApplicationDocumentsDirectory();
-   final controller = FilexController(path: dir.path);
-   Filex(controller: controller);
-    if (controller != null) {
-      File file = File(controller.path);
-      return file;
+  Future<void> exportGroceryList() async {
+    final directory = await getExternalStorageDirectory();
+    final path = directory.absolute.path;
+    List<GroceryItem> groceryItems = await getGroceryList();
+    String jsonGroceryItemList = jsonEncode(groceryItems);
+    File exportFile = File('$path/grocerlys.json');
+    exportFile.writeAsString(jsonGroceryItemList);    
+    await FlutterShare.shareFile(
+      title: 'Grocery Item List exported',
+      text: 'Grocery Item List ',
+      filePath: exportFile.absolute.path,
+    );
+  }
+
+  Future<bool> _openFileExplorer() async {
+    try {
+      FilePickerResult result = await FilePicker.platform.pickFiles(
+          type: FileType.custom, allowedExtensions: ['json','gly']);
+      jsonFile = File(result.files.single.path);
+    } on PlatformException catch (e) {
+      print("Unsupported operation" + e.toString());
+      return false;
     }
-    return null;
+    fileName = jsonFile != null ? jsonFile.path.split('/').last : '';
+    return fileName.length > 0;
   }
 
-  Future<String> get _localPath async {
-    final directory = await getApplicationDocumentsDirectory();
-
-    return directory.path;
-  }
-
-  Future<File> get _localFile async {
-    final path = await _localPath;
-    return File('$path/counter.txt');
+  Future<List<GroceryItem>> getGroceryList() async {
+    DbHelper helper = DbHelper();
+    List<GroceryItem> groceryItemList = <GroceryItem>[];
+    final groceryItemsFuture = await helper.getGroceryItems();
+    int count = groceryItemsFuture.length;
+    for (int i = 0; i < count; i++) {
+      groceryItemList.add(GroceryItem.fromObject(groceryItemsFuture[i]));
+    }
+    return groceryItemList;
   }
 }

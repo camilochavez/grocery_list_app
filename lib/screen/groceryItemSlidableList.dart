@@ -5,6 +5,10 @@ import 'package:grocery_list/util/dbhelper.dart';
 import 'package:grocery_list/util/fileManager.dart';
 import 'GroceryItemdetail.dart';
 
+const mnuImportItems = 'Import Grocery Items';
+const mnuExportItems = 'Export Grocery Items';
+final List<String> choices = const <String>[mnuImportItems,mnuExportItems];
+
 class GroceryItemSlidableList extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _GroceryItemSlidableListState();
@@ -37,38 +41,46 @@ class _GroceryItemSlidableListState extends State {
       getData();
     }
     TextStyle textStyle = TextStyle(
-        fontWeight: FontWeight.bold,
-        color: Colors.white,        
-        fontSize: 18.0);
+        fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18.0);
     return Scaffold(
         appBar: AppBar(
-          title: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Column(children: [Text('Grocery List')]),
-                Padding(
-                    padding: EdgeInsets.only(left: 25.0),
-                    child: Column(children: [
-                      Container(                       
-                          width: 200.0,
-                          height: 30.0,
-                          child: TextField(
-                              controller: _txtTypeAheadController,
-                              style: textStyle,
-                              onChanged: (value) => this.getSuggestionData(),
-                              decoration: InputDecoration(
-                                fillColor: Colors.teal[100],
-                                  labelStyle: textStyle,
-                                  border: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(5.0)))))
-                    ])),
-                Icon(Icons.search)
-              ]),
-          automaticallyImplyLeading: false,
-          backgroundColor: Colors.teal[200],
-        ),        
+            title: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Column(children: [Text('Grocery List')]),
+                  Padding(
+                      padding: EdgeInsets.only(left: 25.0),
+                      child: Column(children: [
+                        Container(
+                            width: 155.0,
+                            height: 30.0,
+                            child: TextField(
+                                controller: _txtTypeAheadController,
+                                style: textStyle,
+                                onChanged: (value) => this.getSuggestionData(),
+                                decoration: InputDecoration(
+                                    fillColor: Colors.teal[100],
+                                    labelStyle: textStyle,
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(5.0)))))
+                      ])),
+                  Icon(Icons.search)
+                ]),
+            automaticallyImplyLeading: false,
+            backgroundColor: Colors.teal[200],
+            actions: <Widget>[
+              PopupMenuButton(
+                onSelected: select,
+                itemBuilder: (BuildContext context) {
+                  return choices.map((String choice) {
+                    return PopupMenuItem<String>(
+                        value: choice, child: Text(choice));
+                  }).toList();
+                },
+              )
+            ]),
         body: Container(
             decoration: BoxDecoration(
               image: DecorationImage(
@@ -88,7 +100,7 @@ class _GroceryItemSlidableListState extends State {
         floatingActionButton: FloatingActionButton(
             backgroundColor: _fabColor,
             onPressed: () {
-              navigateToDetail(GroceryItem(''));              
+              navigateToDetail(GroceryItem(''));
             },
             tooltip: "Add new Grocery Item",
             child: _rotationAnimation == null
@@ -270,7 +282,7 @@ class _GroceryItemSlidableListState extends State {
   void getData() {
     final dbFuture = helper.initializeDb();
     dbFuture.then((result) {
-      final groceryItemsFuture = helper.getGroceryItems();
+      final groceryItemsFuture = helper.getNoBoughtGroceryItems();
       groceryItemsFuture.then((result) {
         List<GroceryItem> groceryItemList = <GroceryItem>[];
         count = result.length;
@@ -408,5 +420,17 @@ class _GroceryItemSlidableListState extends State {
         });
       });
     });
+  }
+
+  Future<void> select(String value) async {
+    switch (value) {
+      case mnuImportItems:
+        await FileManager().importGroceryList();
+        getData();
+        break;
+        case mnuExportItems:
+        await FileManager().exportGroceryList();
+        break;
+    }
   }
 }

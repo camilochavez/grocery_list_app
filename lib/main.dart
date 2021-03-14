@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:grocery_list/screen/groceryPageView.dart';
-import 'package:grocery_list/util/dbhelper.dart';
 
 void main() {
   runApp(GroceryListApp());
@@ -8,9 +7,7 @@ void main() {
 
 class GroceryListApp extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {
-    DbHelper helper = DbHelper();
-    helper.initializeDb().then((result) => helper.getGroceryItems());
+  Widget build(BuildContext context) {   
     return MaterialApp(
       theme: ThemeData(
         primarySwatch: Colors.blue,

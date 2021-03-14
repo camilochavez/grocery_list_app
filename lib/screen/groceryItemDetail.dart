@@ -44,7 +44,6 @@ class GroceryItemDetailState extends State {
           backgroundColor: Colors.teal[200],
           actions: <Widget>[
             PopupMenuButton(
-              icon: Icon(Icons.menu),
               onSelected: select,
               itemBuilder: (BuildContext context) {
                 return choices.map((String choice) {

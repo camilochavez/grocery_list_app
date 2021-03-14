@@ -39,7 +39,7 @@ class DbHelper {
 
   void _createDb(Database db, int newVersion) async {
     await db.execute(
-        "CREATE TABLE $tblGroceryItem($colId INTEGER PRIMARY KEY, $colName TEXT, " +
+        "CREATE TABLE $tblGroceryItem($colId INTEGER PRIMARY KEY, $colName TEXT NOT NULL UNIQUE COLLATE NOCASE, " +
             "$colquantity INTEGER, $colPriority INTEGER, $colPrice INTEGER, $colIsBought INTEGER)");
   }
 
@@ -50,6 +50,13 @@ class DbHelper {
   }
 
   Future<List> getGroceryItems() async {
+    Database db = await this.db;
+    var result = await db.rawQuery(
+        "SELECT * FROM $tblGroceryItem ORDER BY $colPriority, $colName COLLATE NOCASE ASC ");
+    return result;
+  }
+
+  Future<List> getNoBoughtGroceryItems() async {
     Database db = await this.db;
     var result = await db.rawQuery(
         "SELECT * FROM $tblGroceryItem WHERE $colIsBought = 0 ORDER BY $colPriority, $colName COLLATE NOCASE ASC ");
@@ -63,9 +70,9 @@ class DbHelper {
     return result;
   }
 
-    Future<List> groceryItemsTypeAhead(String word, bool isBoughtItem) async {
+  Future<List> groceryItemsTypeAhead(String word, bool isBoughtItem) async {
     Database db = await this.db;
-    int isBough = isBoughtItem?1:0;
+    int isBough = isBoughtItem ? 1 : 0;
     var result = await db.rawQuery(
         "SELECT * FROM $tblGroceryItem WHERE $colIsBought = $isBough and $colName like '$word%' ORDER BY $colPriority, $colName COLLATE NOCASE ASC");
     return result;
@@ -97,5 +104,12 @@ class DbHelper {
     var result = await db.rawUpdate(
         'UPDATE $tblGroceryItem SET $colIsBought = 0 WHERE $colIsBought = 1');
     return result;
+  }
+
+  Future<bool> isGroceryItemAlreadyExistsByName(String groceryItemName) async {
+    Database db = await this.db;
+    var result = Sqflite.firstIntValue(await db.rawQuery(
+        "SELECT COUNT (*) FROM $tblGroceryItem WHERE $colName='$groceryItemName' COLLATE NOCASE"));
+    return result > 0;
   }
 }
