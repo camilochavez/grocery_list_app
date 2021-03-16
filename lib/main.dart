@@ -7,7 +7,7 @@ void main() {
 
 class GroceryListApp extends StatelessWidget {
   @override
-  Widget build(BuildContext context) {   
+  Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -28,8 +28,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        //body: GroceryItemList()
-        body: GroceryPageView());
+    return Scaffold(body: GroceryPageView());
   }
 }

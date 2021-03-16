@@ -7,7 +7,7 @@ import 'GroceryItemdetail.dart';
 
 const mnuImportItems = 'Import Grocery Items';
 const mnuExportItems = 'Export Grocery Items';
-final List<String> choices = const <String>[mnuImportItems,mnuExportItems];
+final List<String> choices = const <String>[mnuImportItems, mnuExportItems];
 
 class GroceryItemSlidableList extends StatefulWidget {
   @override
@@ -41,37 +41,43 @@ class _GroceryItemSlidableListState extends State {
       getData();
     }
     TextStyle textStyle = TextStyle(
-        fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18.0);
+        fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20.0, );
     return Scaffold(
         appBar: AppBar(
+          toolbarHeight: 40,
             title: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Column(children: [Text('Grocery List')]),
                   Padding(
-                      padding: EdgeInsets.only(left: 25.0),
+                      padding: EdgeInsets.only(left: 15.0),
                       child: Column(children: [
-                        Container(
-                            width: 155.0,
-                            height: 30.0,
+                        Container(            
+                          width: 130.0,               
+                            height: 34.0,
                             child: TextField(
                                 controller: _txtTypeAheadController,
-                                style: textStyle,
-                                onChanged: (value) => this.getSuggestionData(),
-                                decoration: InputDecoration(
+                                style: textStyle,                                
+                                onChanged: (value) => this.getSuggestionData(),                                
+                                decoration: InputDecoration(                                  
+                                  hintText: "filter by name...",                                  
+                                  hintStyle: TextStyle(fontSize: 14.0),
                                     fillColor: Colors.teal[100],
                                     labelStyle: textStyle,
                                     border: OutlineInputBorder(
                                         borderRadius:
                                             BorderRadius.circular(5.0)))))
-                      ])),
+                      ])),                     
                   Icon(Icons.search)
                 ]),
             automaticallyImplyLeading: false,
             backgroundColor: Colors.teal[200],
             actions: <Widget>[
-              PopupMenuButton(
+              PopupMenuButton(  
+                icon: Icon(Icons.mediation),   
+                iconSize: 20.0,      
+                padding: EdgeInsets.only(left: 1.0),     
                 onSelected: select,
                 itemBuilder: (BuildContext context) {
                   return choices.map((String choice) {
@@ -425,10 +431,9 @@ class _GroceryItemSlidableListState extends State {
   Future<void> select(String value) async {
     switch (value) {
       case mnuImportItems:
-        await FileManager().importGroceryList();
-        getData();
+        FileManager().importGroceryList().whenComplete(() => getData());
         break;
-        case mnuExportItems:
+      case mnuExportItems:
         await FileManager().exportGroceryList();
         break;
     }

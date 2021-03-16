@@ -37,7 +37,7 @@ class FileManager {
         });
       }
     } catch (e) {
-      return;
+      throw Exception("Error Importing Grocery List");
     }
   }
 

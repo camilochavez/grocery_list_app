@@ -26,10 +26,13 @@ class GroceryItemBoughtListState extends State {
     return Scaffold(
         appBar: AppBar(
           title: Text('Grocery Bough Items List'),
+          toolbarHeight: 40.0,          
           automaticallyImplyLeading: false,
           backgroundColor: Colors.teal[200],
           actions: <Widget>[
             PopupMenuButton(
+              icon: Icon(Icons.mediation),
+              iconSize: 20.0, 
               onSelected: select,
               itemBuilder: (BuildContext context) {
                 return choices.map((String choice) {

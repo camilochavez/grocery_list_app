@@ -1,4 +1,4 @@
-package com.example.grocery_list
+package com.dcx.grocery_list
 
 import io.flutter.embedding.android.FlutterActivity
 
