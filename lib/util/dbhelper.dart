@@ -99,10 +99,10 @@ class DbHelper {
     return result;
   }
 
-  Future<int> cleanGroceryBoughtItem() async {
+  Future<int> cleanGroceryBoughtItem(String boughItemIds) async {
     Database db = await this.db;
     var result = await db.rawUpdate(
-        'UPDATE $tblGroceryItem SET $colIsBought = 0 WHERE $colIsBought = 1');
+        'UPDATE $tblGroceryItem SET $colIsBought = 0 WHERE $colId in ($boughItemIds)');
     return result;
   }
 

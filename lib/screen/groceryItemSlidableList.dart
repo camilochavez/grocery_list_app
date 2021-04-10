@@ -41,43 +41,46 @@ class _GroceryItemSlidableListState extends State {
       getData();
     }
     TextStyle textStyle = TextStyle(
-        fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20.0, );
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
+      fontSize: 20.0,
+    );
     return Scaffold(
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          toolbarHeight: 40,
+            toolbarHeight: 40,
             title: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
-                  Column(children: [Text('Grocery List')]),
-                  Padding(
-                      padding: EdgeInsets.only(left: 15.0),
-                      child: Column(children: [
-                        Container(            
-                          width: 130.0,               
-                            height: 34.0,
-                            child: TextField(
-                                controller: _txtTypeAheadController,
-                                style: textStyle,                                
-                                onChanged: (value) => this.getSuggestionData(),                                
-                                decoration: InputDecoration(                                  
-                                  hintText: "filter by name...",                                  
-                                  hintStyle: TextStyle(fontSize: 14.0),
-                                    fillColor: Colors.teal[100],
-                                    labelStyle: textStyle,
-                                    border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(5.0)))))
-                      ])),                     
-                  Icon(Icons.search)
+                  Row(children: [
+                    Padding(
+                        padding: EdgeInsets.only(right: 25.0, left: 5.0),
+                        child: Text('Grocery List')),
+                    Container(
+                        width: 135.0,
+                        height: 34.0,
+                        child: TextField(
+                            controller: _txtTypeAheadController,
+                            style: textStyle,
+                            onChanged: (value) => this.getSuggestionData(),
+                            decoration: InputDecoration(
+                                hintText: "filter by name...",
+                                hintStyle: TextStyle(fontSize: 14.0),
+                                fillColor: Colors.teal[100],
+                                labelStyle: textStyle,
+                                border: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(5.0))))),
+                    Icon(Icons.search)
+                  ]),
                 ]),
-            automaticallyImplyLeading: false,
             backgroundColor: Colors.teal[200],
             actions: <Widget>[
-              PopupMenuButton(  
-                icon: Icon(Icons.mediation),   
-                iconSize: 20.0,      
-                padding: EdgeInsets.only(left: 1.0),     
+              PopupMenuButton(
+                icon: Icon(Icons.mediation),
+                iconSize: 20.0,
+                padding: EdgeInsets.only(left: 1.0),
                 onSelected: select,
                 itemBuilder: (BuildContext context) {
                   return choices.map((String choice) {
@@ -88,21 +91,22 @@ class _GroceryItemSlidableListState extends State {
               )
             ]),
         body: Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage("images/fresh_vegetables.jpg"),
-                fit: BoxFit.cover,
-              ),
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage("images/fresh_vegetables.jpg"),
+              fit: BoxFit.cover,
             ),
-            child: Center(
-              child: OrientationBuilder(
-                builder: (context, orientation) => _buildList(
-                    context,
-                    orientation == Orientation.portrait
-                        ? Axis.vertical
-                        : Axis.horizontal),
-              ),
-            )),
+          ),
+          child: Center(
+            child: OrientationBuilder(
+              builder: (context, orientation) => _buildList(
+                  context,
+                  orientation == Orientation.portrait
+                      ? Axis.vertical
+                      : Axis.horizontal),
+            ),
+          ),
+        ),
         floatingActionButton: FloatingActionButton(
             backgroundColor: _fabColor,
             onPressed: () {
@@ -166,7 +170,7 @@ class _GroceryItemSlidableListState extends State {
       actionExtentRatio: 0.20,
       child: Card(
           color: Colors.white38,
-          elevation: 2.0,
+          elevation: 2.0,          
           child: ListTile(
             leading: CircleAvatar(
                 backgroundColor: getColor(this.groceryItems[position].priority),
@@ -431,7 +435,9 @@ class _GroceryItemSlidableListState extends State {
   Future<void> select(String value) async {
     switch (value) {
       case mnuImportItems:
-        FileManager().importGroceryList().whenComplete(() => getData());
+        await FileManager().importGroceryList();
+        Future.delayed(const Duration(milliseconds: 500))
+            .then((value) => getData());
         break;
       case mnuExportItems:
         await FileManager().exportGroceryList();

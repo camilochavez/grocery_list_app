@@ -16,7 +16,7 @@ class GroceryItemBoughtListState extends State {
   DbHelper helper = DbHelper();
   List<GroceryItem> groceryItems;
   int count = 0;
-
+  int totalCost = 0;
   @override
   Widget build(BuildContext context) {
     if (groceryItems == null) {
@@ -25,14 +25,21 @@ class GroceryItemBoughtListState extends State {
     }
     return Scaffold(
         appBar: AppBar(
-          title: Text('Grocery Bough Items List'),
-          toolbarHeight: 40.0,          
+          title: Row(children: [
+            Text('Grocery Bough Items  ',
+                style: TextStyle(color: Colors.white, fontSize: 18.0)),
+            Text(
+              '\$$totalCost',
+              style: TextStyle(color: Colors.blue[900], fontSize: 18.0),
+            )
+          ]),
+          toolbarHeight: 40.0,
           automaticallyImplyLeading: false,
           backgroundColor: Colors.teal[200],
           actions: <Widget>[
             PopupMenuButton(
               icon: Icon(Icons.mediation),
-              iconSize: 20.0, 
+              iconSize: 20.0,
               onSelected: select,
               itemBuilder: (BuildContext context) {
                 return choices.map((String choice) {
@@ -81,18 +88,39 @@ class GroceryItemBoughtListState extends State {
         return Card(
           color: Colors.white38,
           elevation: 2.0,
-          child: ListTile(
-            leading: CircleAvatar(
-                backgroundColor: getColor(this.groceryItems[position].priority),
-                child: Text(this.groceryItems[position].quantity.toString())),
-            title:
-                Text(this.groceryItems[position].name, style: textStyleTitle),
-            subtitle: Text("\$" + this.groceryItems[position].price.toString(),
-                style: textStyleSubTitle),
-            onTap: () {
-              navigateToDetail(this.groceryItems[position]);
-            },
-          ),
+          child: Row(children: <Widget>[
+            Container(
+                width: MediaQuery.of(context).size.width - 80,
+                height: 70.0,
+                child: ListTile(
+                  leading: CircleAvatar(
+                      backgroundColor:
+                          getColor(this.groceryItems[position].priority),
+                      child: Text(
+                          this.groceryItems[position].quantity.toString())),
+                  title: Text(this.groceryItems[position].name,
+                      style: textStyleTitle),
+                  subtitle: Text(
+                      "\$" + this.groceryItems[position].price.toString(),
+                      style: textStyleSubTitle),
+                  onTap: () {
+                    navigateToDetail(this.groceryItems[position]);
+                  },
+                )),
+            Padding(
+                padding: EdgeInsets.only(left: 5.0),
+                child: Checkbox(
+                  checkColor: Colors.white,
+                  activeColor: Colors.lightBlueAccent,
+                  value: this.groceryItems[position].isBought,
+                  onChanged: (bool value) {
+                    setState(() {
+                      this.groceryItems[position].isBought = value;
+                      totalCost = getTotalCost();
+                    });
+                  },
+                ))
+          ]),
         );
       },
     );
@@ -111,12 +139,13 @@ class GroceryItemBoughtListState extends State {
         setState(() {
           groceryItems = groceryItemList;
           count = count;
+          totalCost = getTotalCost();
         });
       });
     });
   }
 
-   Color getColor(int priority) {
+  Color getColor(int priority) {
     switch (priority) {
       case 1:
         return Colors.redAccent[700];
@@ -172,8 +201,9 @@ class GroceryItemBoughtListState extends State {
                       style: TextStyle(color: Colors.white),
                     ),
                     onPressed: () {
-                      helper.cleanGroceryBoughtItem();
+                      helper.cleanGroceryBoughtItem(getBoughItemsToClean());
                       Navigator.pop(context, true);
+                      getData();
                     }),
               ],
             );
@@ -181,5 +211,22 @@ class GroceryItemBoughtListState extends State {
         );
         break;
     }
+  }
+
+  int getTotalCost() {
+    int total = 0;
+    groceryItems.where((item) => item.isBought).forEach((item) {
+      total += item.price;
+    });
+    return total;
+  }
+
+  String getBoughItemsToClean() {
+    String ids = '';
+    groceryItems.where((item) => item.isBought).forEach((item) {
+      ids += item.id.toString() + ",";
+    });
+
+    return ids.substring(0, ids.length - 1);
   }
 }
