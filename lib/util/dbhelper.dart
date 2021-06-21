@@ -106,6 +106,12 @@ class DbHelper {
     return result;
   }
 
+  Future<int> deleteGroceryBoughtItem(String boughItemIds) async {
+    Database db = await this.db;
+    var result = await db.rawUpdate(
+        'DELETE FROM $tblGroceryItem WHERE $colId in ($boughItemIds)');
+    return result;
+  }
   Future<bool> isGroceryItemAlreadyExistsByName(String groceryItemName) async {
     Database db = await this.db;
     var result = Sqflite.firstIntValue(await db.rawQuery(

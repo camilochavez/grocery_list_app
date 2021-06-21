@@ -3,11 +3,21 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:grocery_list/model/groceryItem.dart';
 import 'package:grocery_list/util/dbhelper.dart';
 import 'package:grocery_list/util/fileManager.dart';
+import 'package:grocery_list/util/groceryActions.dart';
+import 'package:grocery_list/util/uiHelper.dart';
+import 'package:grocery_list/widget/boughtIconSlideAction.dart';
+import 'package:grocery_list/widget/deleteIconSlideAction%20copy.dart';
+import 'package:grocery_list/widget/groceryCard.dart';
 import 'GroceryItemdetail.dart';
 
 const mnuImportItems = 'Import Grocery Items';
 const mnuExportItems = 'Export Grocery Items';
-final List<String> choices = const <String>[mnuImportItems, mnuExportItems];
+const mnuDeleteItems = 'Delete Grocery Items';
+final List<String> choices = const <String>[
+  mnuImportItems,
+  mnuExportItems,
+  mnuDeleteItems
+];
 
 class GroceryItemSlidableList extends StatefulWidget {
   @override
@@ -97,14 +107,9 @@ class _GroceryItemSlidableListState extends State {
               fit: BoxFit.cover,
             ),
           ),
-          child: Center(
-            child: OrientationBuilder(
-              builder: (context, orientation) => _buildList(
-                  context,
-                  orientation == Orientation.portrait
-                      ? Axis.vertical
-                      : Axis.horizontal),
-            ),
+          child: OrientationBuilder(
+            builder: (context, orientation) =>
+                _buildList(context, Axis.horizontal),
           ),
         ),
         floatingActionButton: FloatingActionButton(
@@ -128,11 +133,9 @@ class _GroceryItemSlidableListState extends State {
 
   Widget _buildList(BuildContext context, Axis direction) {
     return ListView.builder(
-      scrollDirection: direction,
+      scrollDirection: Axis.vertical,
       itemBuilder: (context, position) {
-        final Axis slidableDirection =
-            direction == Axis.horizontal ? Axis.vertical : Axis.horizontal;
-        return _slidableWithDelegates(context, position, slidableDirection);
+        return _slidableWithDelegates(context, position, direction);
       },
       itemCount: groceryItems.length,
     );
@@ -141,140 +144,53 @@ class _GroceryItemSlidableListState extends State {
   Widget _slidableWithDelegates(
       BuildContext context, int position, Axis direction) {
     final GroceryItem item = groceryItems[position];
-    TextStyle textStyleTitle = TextStyle(
-        fontWeight: FontWeight.bold,
-        color: Colors.teal[900],
-        fontSize: 18.0,
-        decorationThickness: 3.0,
-        decoration: TextDecoration.underline,
-        shadows: [
-          BoxShadow(
-              color: Colors.white24, blurRadius: 5.0, offset: Offset(3.0, 3.0))
-        ]);
-    TextStyle textStyleSubTitle = TextStyle(
-        fontWeight: FontWeight.bold,
-        backgroundColor: Colors.white24,
-        color: Colors.teal[900],
-        fontSize: 15.0,
-        decorationThickness: 3.0,
-        decoration: TextDecoration.underline,
-        shadows: [
-          BoxShadow(
-              color: Colors.white, blurRadius: 5.0, offset: Offset(3.0, 3.0))
-        ]);
     return Slidable.builder(
       key: Key(item.id.toString()),
       controller: _slidableController,
       direction: direction,
-      actionPane: _actionPane(item.id),
+      actionPane: GroceryActions.actionPane(item.id),
       actionExtentRatio: 0.20,
-      child: Card(
-          color: Colors.white38,
-          elevation: 2.0,          
-          child: ListTile(
-            leading: CircleAvatar(
-                backgroundColor: getColor(this.groceryItems[position].priority),
-                child: Text(this.groceryItems[position].quantity.toString())),
-            title:
-                Text(this.groceryItems[position].name, style: textStyleTitle),
-            subtitle: Text("\$" + this.groceryItems[position].price.toString(),
-                style: textStyleSubTitle),
-            onTap: () {
-              navigateToDetail(this.groceryItems[position]);
+      child: SingleChildScrollView(
+        child: GroceryCard(
+            onChanged: (bool value) {
+              setState(() {
+                this.groceryItems[position].isBought = value;
+              });
             },
-          )),
+            onTap: () => navigateToDetail(this.groceryItems[position]),
+            groceryItem: this.groceryItems[position]),
+      ),
       actionDelegate: SlideActionBuilderDelegate(
           actionCount: 1,
           builder: (context, index, animation, renderingMode) {
-            return IconSlideAction(
-                caption: 'Bought it!',
-                color: renderingMode == SlidableRenderingMode.slide
-                    ? Colors.blue.withOpacity(animation.value)
-                    : (renderingMode == SlidableRenderingMode.dismiss
-                        ? Colors.blue
-                        : Colors.green),
-                icon: Icons.shopping_cart_rounded,
-                onTap: () async {
-                  await _displayTextInputDialog(context, item);
-                });
+            return BoughtIconSlideAction(
+                onTap: () => _displayTextInputDialog(context, item),
+                renderingMode: renderingMode,
+                animation: animation,
+                index: index,
+                caption: 'I Bought it!');
           }),
       secondaryActionDelegate: SlideActionBuilderDelegate(
           actionCount: 1,
           builder: (context, position, animation, renderingMode) {
-            return IconSlideAction(
-              caption: 'Delete',
-              color: renderingMode == SlidableRenderingMode.slide
-                  ? Colors.red.withOpacity(animation.value)
-                  : Colors.red,
-              icon: Icons.delete,
-              onTap: () async {
-                await showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      backgroundColor: Colors.redAccent,
-                      title: Text(
-                        'Delete',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      content: Text(
-                        'Item will be deleted',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      actions: <Widget>[
-                        TextButton(
-                          child: Text(
-                            'Cancel',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          onPressed: () => Navigator.of(context).pop(false),
-                        ),
-                        TextButton(
-                            child: Text(
-                              'Ok',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            onPressed: () {
-                              deleteGroceryItem(item).then((value) {
-                                if (value) {
-                                  setState(() {
-                                    groceryItems.remove(item);
-                                  });
-                                  _showSnackBar(context, 'Delete');
-                                } else {
-                                  _showSnackBar(context, 'Failed!');
-                                }
-                              });
-                              Navigator.of(context).pop(true);
-                            }),
-                      ],
-                    );
-                  },
-                );
-              },
-            );
+            return DeleteIconSlideAction(
+                onDialogOkPressed: () {
+                  deleteGroceryItem(item).then((value) {
+                    if (value) {
+                      setState(() {
+                        groceryItems.remove(item);
+                      });
+                      UIHelper.showSnackBar(context, 'Delete');
+                    } else {
+                      UIHelper.showSnackBar(context, 'Failed!');
+                    }
+                  });
+                  Navigator.of(context).pop(true);
+                },
+                renderingMode: renderingMode,
+                animation: animation);
           }),
     );
-  }
-
-  static Widget _actionPane(int position) {
-    switch (position % 4) {
-      case 0:
-        return SlidableScrollActionPane();
-      case 1:
-        return SlidableDrawerActionPane();
-      case 2:
-        return SlidableStrechActionPane();
-      case 3:
-        return SlidableBehindActionPane();
-
-      default:
-        return null;
-    }
-  }
-
-  void _showSnackBar(BuildContext context, String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   void slideAnimationChanged(Animation<double> slideAnimation) {
@@ -317,36 +233,11 @@ class _GroceryItemSlidableListState extends State {
     }
   }
 
-  Color getColor(int priority) {
-    switch (priority) {
-      case 1:
-        return Colors.redAccent[700];
-        break;
-      case 2:
-        return Colors.orange[700];
-        break;
-      case 3:
-        return Colors.lightBlueAccent;
-        break;
-      default:
-        return Colors.green;
-    }
-  }
-
   Future<bool> deleteGroceryItem(GroceryItem groceryItem) async {
     if (groceryItem.id == null) {
       return false;
     }
     int result = await helper.deleteGroceryItem(groceryItem.id);
-    return result != 0 ? true : false;
-  }
-
-  Future<bool> groceryIsBought(GroceryItem groceryItem) async {
-    if (groceryItem.id == null) {
-      return false;
-    }
-    groceryItem.isBought = true;
-    int result = await helper.updateGroceryItem(groceryItem);
     return result != 0 ? true : false;
   }
 
@@ -392,14 +283,15 @@ class _GroceryItemSlidableListState extends State {
                     style: TextStyle(color: Colors.white),
                   ),
                   onPressed: () {
-                    groceryIsBought(groceryItem).then((value) {
+                    GroceryActions.changeGroceryState(true, groceryItem, helper)
+                        .then((value) {
                       if (value) {
                         setState(() {
                           groceryItems.remove(groceryItem);
-                          _showSnackBar(context, 'Bought it');
+                          UIHelper.showSnackBar(context, 'Bought it');
                         });
                       } else {
-                        _showSnackBar(context, 'Failed!');
+                        UIHelper.showSnackBar(context, 'Failed!');
                       }
                     });
                     Navigator.of(context).pop(true);
@@ -441,6 +333,44 @@ class _GroceryItemSlidableListState extends State {
         break;
       case mnuExportItems:
         await FileManager().exportGroceryList();
+        break;
+      case mnuDeleteItems:
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              backgroundColor: Colors.redAccent,
+              title: Text(
+                mnuDeleteItems,
+                style: TextStyle(color: Colors.white),
+              ),
+              content: Text(
+                'Items will be deleted',
+                style: TextStyle(color: Colors.white),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+                TextButton(
+                    child: Text(
+                      'Ok',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () {
+                      helper.deleteGroceryBoughtItem(
+                          GroceryActions.getBoughItemsToClean(groceryItems));
+                      Navigator.pop(context, true);
+                      getData();
+                    }),
+              ],
+            );
+          },
+        );
         break;
     }
   }

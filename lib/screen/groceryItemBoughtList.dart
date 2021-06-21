@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:grocery_list/model/groceryItem.dart';
 import 'package:grocery_list/util/dbhelper.dart';
 import 'package:grocery_list/screen/GroceryItemdetail.dart';
+import 'package:grocery_list/util/groceryActions.dart';
+import 'package:grocery_list/util/uiHelper.dart';
+import 'package:grocery_list/widget/boughtIconSlideAction.dart';
+import 'package:grocery_list/widget/deleteIconSlideAction%20copy.dart';
+import 'package:grocery_list/widget/groceryCard.dart';
 
 const mnuCleanBoughItems = 'Clean Grocery Bough Items';
+const mnuDeleteBoughItems = 'Delete Grocery Bough Items';
 
-final List<String> choices = const <String>[mnuCleanBoughItems];
+final List<String> choices = const <String>[
+  mnuCleanBoughItems,
+  mnuDeleteBoughItems
+];
 
 class GroceryItemBoughtList extends StatefulWidget {
   @override
@@ -14,6 +24,7 @@ class GroceryItemBoughtList extends StatefulWidget {
 
 class GroceryItemBoughtListState extends State {
   DbHelper helper = DbHelper();
+  SlidableController _slidableController;
   List<GroceryItem> groceryItems;
   int count = 0;
   int totalCost = 0;
@@ -57,72 +68,84 @@ class GroceryItemBoughtListState extends State {
                 fit: BoxFit.cover,
               ),
             ),
-            child: groceryItemList()));
+            child: Center(
+              child: OrientationBuilder(
+                builder: (context, orientation) =>
+                    _buildList(context, Axis.horizontal),
+              ),
+            )));
   }
 
-  ListView groceryItemList() {
-    TextStyle textStyleTitle = TextStyle(
-        fontWeight: FontWeight.bold,
-        color: Colors.teal[900],
-        fontSize: 18.0,
-        decorationThickness: 3.0,
-        decoration: TextDecoration.underline,
-        shadows: [
-          BoxShadow(
-              color: Colors.white24, blurRadius: 5.0, offset: Offset(3.0, 3.0))
-        ]);
-    TextStyle textStyleSubTitle = TextStyle(
-        fontWeight: FontWeight.bold,
-        backgroundColor: Colors.white24,
-        color: Colors.teal[900],
-        fontSize: 15.0,
-        decorationThickness: 3.0,
-        decoration: TextDecoration.underline,
-        shadows: [
-          BoxShadow(
-              color: Colors.white, blurRadius: 5.0, offset: Offset(3.0, 3.0))
-        ]);
+  Widget _buildList(BuildContext context, Axis direction) {
     return ListView.builder(
-      itemCount: count,
-      itemBuilder: (BuildContext context, int position) {
-        return Card(
-          color: Colors.white38,
-          elevation: 2.0,
-          child: Row(children: <Widget>[
-            Container(
-                width: MediaQuery.of(context).size.width - 80,
-                height: 70.0,
-                child: ListTile(
-                  leading: CircleAvatar(
-                      backgroundColor:
-                          getColor(this.groceryItems[position].priority),
-                      child: Text(
-                          this.groceryItems[position].quantity.toString())),
-                  title: Text(this.groceryItems[position].name,
-                      style: textStyleTitle),
-                  subtitle: Text(
-                      "\$" + this.groceryItems[position].price.toString(),
-                      style: textStyleSubTitle),
-                  onTap: () {
-                    navigateToDetail(this.groceryItems[position]);
-                  },
-                )),
-            Padding(
-                padding: EdgeInsets.only(left: 5.0),
-                child: Checkbox(
-                  checkColor: Colors.white,
-                  activeColor: Colors.lightBlueAccent,
-                  value: this.groceryItems[position].isBought,
-                  onChanged: (bool value) {
-                    setState(() {
-                      this.groceryItems[position].isBought = value;
-                      totalCost = getTotalCost();
-                    });
-                  },
-                ))
-          ]),
-        );
+      scrollDirection: Axis.vertical,
+      itemBuilder: (context, position) {
+        return _slidableWithDelegates(context, position, direction);
       },
+      itemCount: groceryItems.length,
+    );
+  }
+
+  Widget _slidableWithDelegates(
+      BuildContext context, int position, Axis direction) {
+    final GroceryItem item = groceryItems[position];
+    return Slidable.builder(
+      key: Key(item.id.toString()),
+      controller: _slidableController,
+      direction: direction,
+      actionPane: GroceryActions.actionPane(item.id),
+      actionExtentRatio: 0.20,
+      child: GroceryCard(
+          onChanged: (bool value) {
+            setState(() {
+              this.groceryItems[position].isBought = value;
+              totalCost = getTotalCost();
+            });
+          },
+          onTap: () => navigateToDetail(this.groceryItems[position]),
+          groceryItem: this.groceryItems[position]),
+      actionDelegate: SlideActionBuilderDelegate(
+          actionCount: 1,
+          builder: (context, index, animation, renderingMode) {
+            return BoughtIconSlideAction(
+                onTap: () {
+                  GroceryActions.changeGroceryState(false, item, helper)
+                      .then((value) {
+                    if (value) {
+                      setState(() {
+                        groceryItems.remove(item);
+                        UIHelper.showSnackBar(context, 'To-Bought it');
+                      });
+                    } else {
+                      UIHelper.showSnackBar(context, 'Failed!');
+                    }
+                  });
+                },
+                renderingMode: renderingMode,
+                animation: animation,
+                index: index,
+                caption: 'To Buy!');
+          }),
+      secondaryActionDelegate: SlideActionBuilderDelegate(
+          actionCount: 1,
+          builder: (context, position, animation, renderingMode) {
+            return DeleteIconSlideAction(
+                onDialogOkPressed: () {
+                  GroceryActions.deleteGroceryItem(item, helper).then((value) {
+                    if (value) {
+                      setState(() {
+                        groceryItems.remove(item);
+                      });
+                      UIHelper.showSnackBar(context, 'Delete');
+                    } else {
+                      UIHelper.showSnackBar(context, 'Failed!');
+                    }
+                  });
+                  Navigator.of(context).pop(true);
+                },
+                renderingMode: renderingMode,
+                animation: animation);
+          }),
     );
   }
 
@@ -143,22 +166,6 @@ class GroceryItemBoughtListState extends State {
         });
       });
     });
-  }
-
-  Color getColor(int priority) {
-    switch (priority) {
-      case 1:
-        return Colors.redAccent[700];
-        break;
-      case 2:
-        return Colors.orange[700];
-        break;
-      case 3:
-        return Colors.lightBlueAccent;
-        break;
-      default:
-        return Colors.green;
-    }
   }
 
   void navigateToDetail(GroceryItem groceryItem) async {
@@ -201,7 +208,46 @@ class GroceryItemBoughtListState extends State {
                       style: TextStyle(color: Colors.white),
                     ),
                     onPressed: () {
-                      helper.cleanGroceryBoughtItem(getBoughItemsToClean());
+                      helper.cleanGroceryBoughtItem(
+                          GroceryActions.getBoughItemsToClean(groceryItems));
+                      Navigator.pop(context, true);
+                      getData();
+                    }),
+              ],
+            );
+          },
+        );
+        break;
+      case mnuDeleteBoughItems:
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              backgroundColor: Colors.redAccent,
+              title: Text(
+                mnuDeleteBoughItems,
+                style: TextStyle(color: Colors.white),
+              ),
+              content: Text(
+                'Items will be deleted',
+                style: TextStyle(color: Colors.white),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+                TextButton(
+                    child: Text(
+                      'Ok',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onPressed: () {
+                      helper.deleteGroceryBoughtItem(
+                          GroceryActions.getBoughItemsToClean(groceryItems));
                       Navigator.pop(context, true);
                       getData();
                     }),
@@ -219,14 +265,5 @@ class GroceryItemBoughtListState extends State {
       total += item.price;
     });
     return total;
-  }
-
-  String getBoughItemsToClean() {
-    String ids = '';
-    groceryItems.where((item) => item.isBought).forEach((item) {
-      ids += item.id.toString() + ",";
-    });
-
-    return ids.substring(0, ids.length - 1);
   }
 }

@@ -47,7 +47,7 @@ class FileManager {
     List<GroceryItem> groceryItems = await getGroceryList();
     String jsonGroceryItemList = jsonEncode(groceryItems);
     File exportFile = File('$path/grocerlys.json');
-    exportFile.writeAsString(jsonGroceryItemList);    
+    exportFile.writeAsString(jsonGroceryItemList);
     await FlutterShare.shareFile(
       title: 'Grocery Item List exported',
       text: 'Grocery Item List ',
@@ -57,8 +57,7 @@ class FileManager {
 
   Future<bool> _openFileExplorer() async {
     try {
-      FilePickerResult result = await FilePicker.platform.pickFiles(
-          type: FileType.custom, allowedExtensions: ['json','gly']);
+      FilePickerResult result = await FilePicker.platform.pickFiles();
       jsonFile = File(result.files.single.path);
     } on PlatformException catch (e) {
       print("Unsupported operation" + e.toString());
